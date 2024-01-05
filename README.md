@@ -1,4 +1,4 @@
-# MinecraftRepeatSeedGenerator
+# Minecraft Repeat Seed Generator
 This Tool generating Java Bedrock repeating seeds in seconds
 
 ![Screenshot_56](https://github.com/MZEEN2424/MinecraftRepeatSeedGenerator/assets/81810938/2e442f0d-9df3-4627-b3ed-ec31c18e0718)
