@@ -1,2 +1,2 @@
 # MinecraftRepeatSeedGenerator
-This Tool finding Java Bedrock repeating seeds in seconds
+This Tool generating Java Bedrock repeating seeds in seconds
