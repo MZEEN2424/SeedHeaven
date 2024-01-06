@@ -1,7 +1,5 @@
-# Minecraft Repeat Seed Generator
-This Tool generating Java Bedrock repeating seeds in seconds
+# Seed Heaven
+Tool for Minecraft Seeds
 
-![Screenshot_56](https://github.com/MZEEN2424/MinecraftRepeatSeedGenerator/assets/81810938/2e442f0d-9df3-4627-b3ed-ec31c18e0718)
-![Screenshot_55](https://github.com/MZEEN2424/MinecraftRepeatSeedGenerator/assets/81810938/6e595c63-a88b-4cdd-94c9-b8a086e0ef96)
-![Screenshot_54](https://github.com/MZEEN2424/MinecraftRepeatSeedGenerator/assets/81810938/dcd0bc84-35b3-4975-a01c-9055e3ef8bb2)
-![Screenshot_57](https://github.com/MZEEN2424/MinecraftRepeatSeedGenerator/assets/81810938/702f425c-5ea5-4442-83b6-3c896043e097)
+![Screenshot_58](https://github.com/MZEEN2424/SeedHeaven/assets/81810938/bfcfddaa-b433-4ed8-a49a-a522e8fdc762)
+![Screenshot_59](https://github.com/MZEEN2424/SeedHeaven/assets/81810938/1b12549c-e831-4950-b08c-4687b02d5c6a)
