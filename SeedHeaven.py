@@ -105,7 +105,7 @@ class SeedGeneratorApp:
         self.result_text.config(font=("Arial", 9))
 
         # MADE BY MZEEN
-        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.1", foreground="#666666")
+        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.2", foreground="#666666")
         self.made_by_label.pack(pady=5)
 
         # Progress Bar
