@@ -13,11 +13,13 @@ class SeedGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("SeedHeaven")
-
+        
+        style = ttk.Style()
+        style.theme_use("classic")
         # Modern Style
         self.root.option_add("*TButton*highlightBackground", "#4CAF50")
         self.root.option_add("*TButton*highlightColor", "#4CAF50")
-        self.root.option_add("*TButton*background", "#4CAF50")
+        self.root.option_add("*TButton*background", "#000000")
         self.root.option_add("*TButton*foreground", "white")
         self.root.option_add("*TLabel*foreground", "#333333")
         self.root.option_add("*TFrame*Background", "#f2f2f2")
@@ -100,6 +102,7 @@ class SeedGeneratorApp:
         scrollbar = ttk.Scrollbar(self.result_text_frame, command=self.result_text.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.result_text.config(yscrollcommand=scrollbar.set)
+        self.result_text.config(font=("Arial", 9))
 
         # MADE BY MZEEN
         self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.1", foreground="#666666")
@@ -107,7 +110,7 @@ class SeedGeneratorApp:
 
         # Progress Bar
         self.progress_var = tk.DoubleVar()
-        self.progress_bar = ttk.Progressbar(root, variable=self.progress_var, maximum=100, mode='indeterminate', length=200)
+        self.progress_bar = ttk.Progressbar(root, variable=self.progress_var, maximum=100, mode='indeterminate', length=500)
         self.progress_bar.pack(fill="x", pady=5)
 
         # Structure Seed Button
@@ -117,7 +120,13 @@ class SeedGeneratorApp:
         # Seed To Bits Button
         self.seed_to_bits_button = ttk.Button(root, text="Seed To Bits", command=self.seed_to_bits)
         self.seed_to_bits_button.pack(pady=5)
+        
+        self.status_animation_interval = 20
+        self.target_color = "#4CAF50" 
 
+        self.current_color = "#f0f0f0" 
+        self.animate_status_bar()
+        
     def seed_to_bits(self):
       seed_input = tkinter.simpledialog.askstring("Seed To Bits", "Enter seed:")
       if seed_input is not None:
@@ -127,16 +136,13 @@ class SeedGeneratorApp:
             upper_48_bits = self.get_upper_bits(seed, 48)
             lower_32_bits = self.get_lower_bits(seed, 32)
             upper_32_bits = self.get_upper_bits(seed)
-            lower_16_bits = self.get_lower_bits(seed, 16)  # Added for 16 bits
-            upper_16_bits = self.get_upper_bits(seed, 16)  # Added for 16 bits
+            
 
             result_str = (
                 f"\nLower 48 bits: {hex(lower_48_bits)}\n"
                 f"Upper 48 bits: {hex(upper_48_bits)}\n"
                 f"Lower 32 bits: {hex(lower_32_bits)}\n"
                 f"Upper 32 bits: {hex(upper_32_bits)}\n"
-                f"Lower 16 bits: {hex(lower_16_bits)}\n"  # Added for 16 bits
-                f"Upper 16 bits: {hex(upper_16_bits)}\n"  # Added for 16 bits
             )
             self.result_text.insert(tk.END, result_str)
 
@@ -145,21 +151,40 @@ class SeedGeneratorApp:
             decimal_upper_48_bits = self.bits_to_decimal(upper_48_bits)
             decimal_lower_32_bits = self.bits_to_decimal(lower_32_bits)
             decimal_upper_32_bits = self.bits_to_decimal(upper_32_bits)
-            decimal_lower_16_bits = self.bits_to_decimal(lower_16_bits)  # Added for 16 bits
-            decimal_upper_16_bits = self.bits_to_decimal(upper_16_bits)  # Added for 16 bits
+            
 
             result_str = (
                 f"\nDecimal representation of Lower 48 bits: {decimal_lower_48_bits}\n"
                 f"Decimal representation of Upper 48 bits: {decimal_upper_48_bits}\n"
                 f"Decimal representation of Lower 32 bits: {decimal_lower_32_bits}\n"
                 f"Decimal representation of Upper 32 bits: {decimal_upper_32_bits}\n"
-                f"Decimal representation of Lower 16 bits: {decimal_lower_16_bits}\n"  # Added for 16 bits
-                f"Decimal representation of Upper 16 bits: {decimal_upper_16_bits}\n"  # Added for 16 bits
             )
             self.result_text.insert(tk.END, result_str)
 
         except ValueError:
                 self.result_text.insert(tk.END, "\nInvalid input. Please enter a valid integer seed.")
+                
+    def animate_status_bar(self):
+        target_rgb = [int(self.target_color[i:i+2], 16) for i in (1, 3, 5)]
+        current_rgb = [int(self.current_color[i:i+2], 16) for i in (1, 3, 5)]
+
+        step = [(target_rgb[i] - current_rgb[i]) / 100 for i in range(3)]
+
+       
+        current_rgb = [round(current_rgb[i] + step[i]) for i in range(3)]
+        self.current_color = f"#{current_rgb[0]:02X}{current_rgb[1]:02X}{current_rgb[2]:02X}"
+
+       
+        self.status_bar.configure(background=self.current_color)
+        self.root.after(self.status_animation_interval, self.animate_status_bar)
+        
+    def hex_to_decimal(self, hex_value):
+        try:
+            decimal_value = int(hex_value, 16)
+            return decimal_value
+        except ValueError:
+            return None
+        
     def hex_to_decimal(self, hex_value):
         try:
             decimal_value = int(hex_value, 16)
@@ -168,7 +193,7 @@ class SeedGeneratorApp:
             return None
      
     def find_sister_seeds(self):
-        top = tk.Toplevel(self.root)  # Yeni bir üst düzey pencere oluştur
+        top = tk.Toplevel(self.root) 
         top.title("Find Sister Seeds")
 
 
@@ -186,8 +211,6 @@ class SeedGeneratorApp:
         search_range_label.grid(row=1, column=0, sticky="w")
 
         self.search_range_var = tk.StringVar(value="2^32")  # Default to 2^32
-        search_range_radio_2_16 = ttk.Radiobutton(input_frame, text="2^16 (16-Bit Search)", variable=self.search_range_var, value="2^16")
-        search_range_radio_2_16.grid(row=1, column=1)
         search_range_radio_2_32 = ttk.Radiobutton(input_frame, text="2^32 (32-Bit Search)", variable=self.search_range_var, value="2^32")
         search_range_radio_2_32.grid(row=1, column=2)
         search_range_radio_2_48 = ttk.Radiobutton(input_frame, text="2^48 (48-Bit Search)", variable=self.search_range_var, value="2^48")
@@ -222,9 +245,12 @@ class SeedGeneratorApp:
             self.result_text.insert(tk.END, f"{seed}\n") 
 
         # Update progress bar
-        progress_value = (i / 65536) * 100
+        progress_batch_size = 100  # Adjust as needed
+        for i in range(0, 65536, progress_batch_size):
+         progress_value = (i / 65536) * 100
         self.progress_var.set(progress_value)
         self.root.update()
+
 
          # Update status bar
         self.status_var.set("Sister seeds generated successfully.")
@@ -307,10 +333,12 @@ class SeedGeneratorApp:
             self.result_text.window_create(tk.END, window=chunkbase_button)
             self.result_text.insert(tk.END, "\n\n")
 
-            # Progress Bar Update
-            progress_value = (index / len(seeds)) * 100
-            self.progress_var.set(progress_value)
-            self.root.update()
+           # Update progress bar
+        progress_batch_size = 100  # Adjust as needed
+        for i in range(0, 65536, progress_batch_size):
+         progress_value = (i / 65536) * 100
+        self.progress_var.set(progress_value)
+        self.root.update()
 
         # MADE BY MZEEN
         self.made_by_label.pack()
@@ -369,11 +397,11 @@ class SeedGeneratorApp:
         webbrowser.open(chunkbase_url)
 
     def copy_all(self):
-        # Kullanıcı kutucuktaki tüm metni kopyalayabilir
+       
         all_text = self.result_text.get("1.0", tk.END)
         pyperclip.copy(all_text)
 
-        # Kullanıcıya "All text copied to clipboard" mesajını göster
+        
         self.result_text.insert(tk.END, "All text copied to clipboard.\n")
         self.root.after(3500, self.clear_message)
 
@@ -382,3 +410,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SeedGeneratorApp(root)
     app.root.mainloop()
+    
