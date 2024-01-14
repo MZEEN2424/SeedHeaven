@@ -74,6 +74,7 @@ class SeedGeneratorApp:
         # Clear Results Button
         self.clear_button = ttk.Button(root, text="Clear Results", command=self.clear_results)
         self.clear_button.pack(pady=5)
+        
         #Staus Bar
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
@@ -105,7 +106,7 @@ class SeedGeneratorApp:
         self.result_text.config(font=("Arial", 9))
 
         # MADE BY MZEEN
-        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.2", foreground="#666666")
+        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.3", foreground="#666666")
         self.made_by_label.pack(pady=5)
 
         # Progress Bar
@@ -121,11 +122,19 @@ class SeedGeneratorApp:
         self.seed_to_bits_button = ttk.Button(root, text="Seed To Bits", command=self.seed_to_bits)
         self.seed_to_bits_button.pack(pady=5)
         
+        self.seed_to_text_button = ttk.Button(root, text="Seed To Text(32 Bit Seeds Only)", command=self.seed_to_text)
+        self.seed_to_text_button.pack(pady=5)
+        
+        # Existing Result Textbox
+        self.result_text.delete(1.0, tk.END) 
+        self.result_text.insert(tk.END, "Generated Seeds:\n")
+        
         self.status_animation_interval = 20
         self.target_color = "#4CAF50" 
 
         self.current_color = "#f0f0f0" 
         self.animate_status_bar()
+        
         
     def seed_to_bits(self):
       seed_input = tkinter.simpledialog.askstring("Seed To Bits", "Enter seed:")
@@ -178,12 +187,6 @@ class SeedGeneratorApp:
         self.status_bar.configure(background=self.current_color)
         self.root.after(self.status_animation_interval, self.animate_status_bar)
         
-    def hex_to_decimal(self, hex_value):
-        try:
-            decimal_value = int(hex_value, 16)
-            return decimal_value
-        except ValueError:
-            return None
         
     def hex_to_decimal(self, hex_value):
         try:
@@ -230,7 +233,50 @@ class SeedGeneratorApp:
 
      search_range = int(self.search_range_var.get().split("^")[1])
      Thread(target=self.generate_sister_seeds_threaded, args=(base_seed, search_range)).start()
+     
+    def seed_to_text(self):
+        
+        seed_input = tkinter.simpledialog.askstring("Seed To Text", "Enter seed:")
+        if seed_input is not None:
+            try:
+                seed = int(seed_input)
+                seed_count = int(tkinter.simpledialog.askstring("Seed To Text", "Enter seed count:"))
+                result = self.search(seed, "<", seed_count)
+                self.result_text.delete(1.0, tk.END)
+                random.shuffle(result)
+                self.result_text.insert(tk.END, "Seed results:\n")
+                for item in result:
+                    self.result_text.insert(tk.END, f"{item}\n")
+            except ValueError:
+                messagebox.showerror("Invalid Input", "Please enter valid integer values.")
+                
     
+    def search(self, seed, start, amount):
+        res = []
+        base = ""
+        while len(res) < amount:
+            base += start
+            dist = seed - self.java_hashcode(base)
+            while dist < 0:
+                dist += 1 << 32
+            while 31**len(base) > dist:
+                nxt = ""
+                tmp = dist
+                for char in base:
+                    c = ord(char) + tmp % 31
+                    tmp //= 31
+                    nxt = chr(c) + nxt
+                res.append(nxt)
+                if len(res) >= amount:
+                    return res
+                dist += 1 << 32
+        return res
+
+    def java_hashcode(self, s):
+        h = 0
+        for c in s:
+            h = (31 * h + ord(c)) & 0xFFFFFFFF
+        return ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
     
     def generate_sister_seeds_threaded(self, base_seed, search_range):
         self.status_var.set("Searching Seeds...")
@@ -250,7 +296,6 @@ class SeedGeneratorApp:
          progress_value = (i / 65536) * 100
         self.progress_var.set(progress_value)
         self.root.update()
-
 
          # Update status bar
         self.status_var.set("Sister seeds generated successfully.")
@@ -344,25 +389,33 @@ class SeedGeneratorApp:
         self.made_by_label.pack()
         
     def seed_check(self):
-     seed_input = tkinter.simpledialog.askstring("Structure Seed", "Enter seed:")
-     if seed_input is not None:
-        try:
-            seed = int(seed_input)
+        seed_input = tkinter.simpledialog.askstring("Structure Seed", "Enter seed:")
+        if seed_input is not None:
+         try:
+              seed = int(seed_input)
 
-            # Convert world seed to structure seed
-            structure_seed = self.to_structure_seed(seed)
-            result_str = f"Structure Seed: {structure_seed}\n"
+            # Convert world seed to structure seeds
+              structure_seed_48_bit = self.to_structure_seed(seed)
+              structure_seed_32_bit = self.to_structure_seed(seed, num_bits=32)
 
-            self.result_text.insert(tk.END, result_str)
+              result_str = (
+                f"48-bit Structure Seed: {structure_seed_48_bit}\n"
+                f"32-bit Structure Seed: {structure_seed_32_bit}\n"
+              )
 
-        except ValueError:
+              self.result_text.insert(tk.END, result_str)
+
+         except ValueError:
             self.result_text.insert(tk.END, "\nInvalid input. Please enter a valid integer seed.")
 
-    
+    def is_32bit_int(n):
+     return n.bit_length() <= 32
 
-    def to_structure_seed(self, world_seed):
-        # This is a placeholder for the WorldSeed.toStructureSeed() method
-        return world_seed & ((1 << 48) - 1)  # This is just a dummy calculation
+    def to_structure_seed(self, world_seed, num_bits=48):
+        if world_seed.bit_length() <= num_bits:
+            return world_seed
+        else:
+            return world_seed & ((1 << num_bits) - 1)
     
     def save_all_seeds(self):
         seeds_text = self.result_text.get("1.0", tk.END)
