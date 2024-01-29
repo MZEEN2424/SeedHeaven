@@ -8,27 +8,30 @@ import pyperclip
 from tkinter import filedialog
 import tkinter.simpledialog
 from tkinter import messagebox
+from datetime import datetime
 
 class SeedGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("SeedHeaven")
         
-        style = ttk.Style()
-        style.theme_use("classic")
-        # Modern Style
-        self.root.option_add("*TButton*highlightBackground", "#4CAF50")
-        self.root.option_add("*TButton*highlightColor", "#4CAF50")
-        self.root.option_add("*TButton*background", "#000000")
-        self.root.option_add("*TButton*foreground", "white")
-        self.root.option_add("*TLabel*foreground", "#333333")
-        self.root.option_add("*TFrame*Background", "#f2f2f2")
+         # Set color scheme
+        self.background_color = "#FFFFFF"
+        self.primary_color = "#2E7D32"  # Bolder green
+        self.secondary_color = "#F57C00"  # Complementary orange
+        self.text_color = "#333333"
+        
+        self.style = ttk.Style()
+        self.style.theme_use("clam")  # Use a theme for a modern look
 
-        style = ttk.Style()
-        style.configure("TButton", padding=(6, 3), relief="flat")
-        style.configure("Status.TLabel", background="#f0f0f0", relief="flat", font=("Helvetica", 10))
-        style.configure("TProgressbar", thickness=100)
-
+        # Configure colors
+        self.style.configure("TButton", padding=(15, 10), relief="flat", font=("Roboto", 9), foreground="white", borderwidth=2, borderradius=30)
+        self.style.map("TButton", background=[("", self.primary_color)])
+        self.style.configure("TLabel", foreground=self.text_color, font=("Roboto", 10), background=self.background_color)
+        self.style.configure("TFrame", background=self.background_color)
+        self.style.configure("TProgressbar", thickness=20, troughcolor=self.background_color, background=self.secondary_color)
+        self.style.configure("TRadiobutton", background=self.secondary_color, foreground="white", padding=(8, 4), font=("Roboto", 8), borderwidth=2, relief="solid")
+        self.style.map("TRadiobutton", background=[("selected", self.secondary_color)])
         # Structure Selection
         self.structure_frame = ttk.Frame(root)
         self.structure_frame.pack(pady=10)
@@ -40,8 +43,10 @@ class SeedGeneratorApp:
         self.structure_options = {
             1: "Repeating World [Bedrock]",
             2: "Mineshafts [Bedrock]",
-            3: "Repeating World [Java]",
-            4: "Repeating World 2 [Java]"
+            3: "Repeating Mineshafts [Java]",
+            4: "Repeating Mineshafts 2 [Java]",
+            5: "12 Eye End Portal [Bedrock]",
+            6: "Repeating Ravines [Java]"
         }
 
         self.structure_combobox = ttk.Combobox(self.structure_frame, textvariable=self.structure_var, values=list(self.structure_options.values()))
@@ -90,29 +95,32 @@ class SeedGeneratorApp:
 
         # Add "Find Sister Seeds" menu item
         self.find_sister_seeds_menu = tk.Menu(self.menu_bar)
-        self.menu_bar.add_cascade(label="Sister Seeds", menu=self.find_sister_seeds_menu)
+        self.menu_bar.add_cascade(label="Sister Seeds Finding", menu=self.find_sister_seeds_menu)
         self.find_sister_seeds_menu.add_command(label="Find Sister Seeds", command=self.find_sister_seeds)
-
-        # Result Display with Vertical Scrollbar
         self.result_text_frame = ttk.Frame(root)
-        self.result_text_frame.pack()
+        self.result_text_frame.pack(pady=10)
 
-        self.result_text = tk.Text(self.result_text_frame, height=10, width=50, wrap=tk.WORD)
-        self.result_text.grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self.result_text = tk.Text(self.result_text_frame, height=10, width=50, wrap=tk.WORD, font=("Arial", 10))
+        self.result_text.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 5))
 
-        scrollbar = ttk.Scrollbar(self.result_text_frame, command=self.result_text.yview)
+        scrollbar = ttk.Scrollbar(self.result_text_frame, command=self.result_text.yview, style="Vertical.TScrollbar")
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.result_text.config(yscrollcommand=scrollbar.set)
-        self.result_text.config(font=("Arial", 9))
+
+       
+        self.result_text.tag_configure("result", background="#2E7D32", foreground="white", font=("Arial", 10))
+
+        self.style = ttk.Style()
+        self.style.configure("Vertical.TScrollbar", troughcolor="#F57C00", slidercolor="white", bordercolor="#F57C00", arrowcolor="white")
 
         # MADE BY MZEEN
-        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.3", foreground="#666666")
+        self.made_by_label = ttk.Label(root, text="MADE BY MZEEN\nTool For Minecraft Seeds\nVersion: 1.4", foreground="#666666")
         self.made_by_label.pack(pady=5)
 
         # Progress Bar
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(root, variable=self.progress_var, maximum=100, mode='indeterminate', length=500)
-        self.progress_bar.pack(fill="x", pady=5)
+        self.progress_bar.pack(fill="x", pady=5)    
 
         # Structure Seed Button
         self.seed_check_button = ttk.Button(root, text="Structure Seed", command=self.seed_check)
@@ -125,16 +133,102 @@ class SeedGeneratorApp:
         self.seed_to_text_button = ttk.Button(root, text="Seed To Text(32 Bit Seeds Only)", command=self.seed_to_text)
         self.seed_to_text_button.pack(pady=5)
         
+        self.seed_convert_button = ttk.Button(root, text="Bit Info (Only Positive Seeds)", command=self.convert_and_display)
+        self.seed_convert_button.pack(pady=5)
+
         # Existing Result Textbox
         self.result_text.delete(1.0, tk.END) 
         self.result_text.insert(tk.END, "Generated Seeds:\n")
         
-        self.status_animation_interval = 20
+        self.status_animation_interval = 80
         self.target_color = "#4CAF50" 
 
         self.current_color = "#f0f0f0" 
         self.animate_status_bar()
+        self.style = ttk.Style()
+        self.style.configure("TButton", padding=(15, 10), relief="flat", font=("Roboto", 9), background=self.primary_color)
+        self.style.map("TButton", background=[("active", self.secondary_color)])
         
+    def convert_and_display(self):
+        # Get Decimal Seed from the user
+        decimal_seed = tkinter.simpledialog.askstring("Binary Splitter", "Enter Seed:")
+        
+        if decimal_seed is None:
+            return 
+
+        try:
+            decimal_seed_int = int(decimal_seed)
+            binary_seed = self.get_binary_representation(decimal_seed_int)
+
+            lower_32_bits, upper_32_bits = self.split_bits(binary_seed, 32)
+            lower_48_bits, upper_48_bits = self.split_bits(binary_seed, 48)
+
+            result_str = (
+            f"\nConverted Seed: {decimal_seed_int}\n"
+            f"Lower 32 Bits (Binary): {lower_32_bits}\n"
+            f"Upper 32 Bits (Binary): {upper_32_bits}\n"
+            f"Lower 32 Bits (Text): {self.binary_to_text(lower_32_bits)}\n"
+            f"Upper 32 Bits (Text): {self.binary_to_text(upper_32_bits)}\n"
+            f"Lower 32 Bits (Hex): {hex(int(lower_32_bits, 2))}\n"
+            f"Upper 32 Bits (Hex): {hex(int(upper_32_bits, 2))}\n"
+            f"Lower 32 Bits (Decimal): {int(lower_32_bits, 2)}\n"
+            f"Upper 32 Bits (Decimal): {int(upper_32_bits, 2)}\n"
+            f"\nLower 48 Bits (Binary): {lower_48_bits}\n"
+            f"Upper 48 Bits (Binary): {upper_48_bits}\n"
+            f"Lower 48 Bits (Text): {self.binary_to_text(lower_48_bits)}\n"
+            f"Upper 48 Bits (Text): {self.binary_to_text(upper_48_bits)}\n"
+            f"Lower 48 Bits (Hex): {hex(int(lower_48_bits, 2))}\n"
+            f"Upper 48 Bits (Hex): {hex(int(upper_48_bits, 2))}\n"
+            f"Lower 48 Bits (Decimal): {int(lower_48_bits, 2)}\n"
+            f"Upper 48 Bits (Decimal): {int(upper_48_bits, 2)}\n"
+        )
+            self.result_text.insert(tk.END, result_str)
+        except ValueError:
+            self.result_text.insert(tk.END, "\nInvalid input. Please enter a valid decimal seed.")
+    
+    def binary_to_text(self, binary_str):
+    # Convert binary string to text (assuming ASCII encoding)
+        text = ''.join([chr(int(binary_str[i:i+8], 2)) for i in range(0, len(binary_str), 8)])
+        return text
+            
+
+    def get_binary_representation(self, decimal_seed):
+        # Convert decimal seed to binary
+        binary_seed = bin(decimal_seed)[2:]
+
+        # If the binary representation is longer than 64 bits, truncate the excess bits
+        if len(binary_seed) > 64:
+            binary_seed = binary_seed[-64:]
+
+        # If the binary representation is shorter than 64 bits, pad with zeros
+        binary_seed = binary_seed.zfill(64)
+
+        return binary_seed
+
+    def split_bits(self, binary_seed, num_bits):
+        lower_bits = binary_seed[-num_bits:]
+        upper_bits = binary_seed[:-num_bits]
+        return lower_bits, upper_bits
+
+    
+    def convert_seeds(self, lower_bits, upper_bits):
+        try:
+            lower_bits_int = int(lower_bits, 2)
+            upper_bits_int = int(upper_bits, 2)
+            
+            # Combine lower and upper bits to get the seed
+            seed = (upper_bits_int << 48) | lower_bits_int
+
+            # Display the result
+            result_str = f"\nConverted Seed: {seed}\n"
+            self.result_text.insert(tk.END, result_str)
+        except ValueError:
+            self.result_text.insert(tk.END, "\nInvalid input. Please enter valid binary representations of lower and upper bits.")
+
+
+    def combine_bits(self, lower_bits, upper_bits):
+        seed = (int(upper_bits) << 16) | int(lower_bits)
+        return seed
         
     def seed_to_bits(self):
       seed_input = tkinter.simpledialog.askstring("Seed To Bits", "Enter seed:")
@@ -318,10 +412,14 @@ class SeedGeneratorApp:
             return seed
         elif structure == "Mineshafts [Bedrock]":
             return int(bin(n * 4) + '111011101001010100010100101110', 2)
-        elif structure == "Repeating World [Java]":
+        elif structure == "Repeating Mineshafts [Java]":
             return int(bin(n * 4) + '11000010101100111010000101010101100110011000100', 2)
-        elif structure == "Repeating World 2 [Java]":
+        elif structure == "Repeating Mineshafts 2 [Java]":
             return int(bin(n * 2) + '100101010111000010110010101100011100011011111010', 2)
+        elif structure == "12 Eye End Portal [Bedrock]":
+            return int(bin(n * 4) + '00111101010101010001111001011000', 2)
+        elif structure == "Repeating Ravines [Java]":
+            return int(bin(n * 2) + '11000010101100111010000101010101100110011000010', 2)
         else:
             raise ValueError("Invalid structure type")
 
@@ -345,24 +443,30 @@ class SeedGeneratorApp:
         self.status_var.set("Seeds generated successfully.")
 
     def generate_seeds_helper(self, structure, seed_count):
-        if structure in ["Repeating World [Java]", "Repeating World 2 [Java]"]:
+        if structure in ["Repeating World [Java]", "Repeating World 2 [Java]", "Repeating Ravines [Java]"]:
             lower_limit = 1
             upper_limit = 10000
         else:
             lower_limit = 1
-            upper_limit = min(seed_count, 1000000)  # Adjust as needed
-        unique_seeds = random.choices(range(lower_limit, upper_limit + 1), k=min(seed_count, upper_limit - lower_limit + 1))
+            upper_limit = 10000000  # Adjust as needed
+        unique_seeds = set()
 
-        seeds = [self.get_seed(seed, structure) for seed in unique_seeds]
+        while len(unique_seeds) < seed_count:
+         seed = self.get_seed(random.randint(lower_limit, upper_limit), structure)
+         unique_seeds.add(seed)
+
+        seeds = list(unique_seeds)
         return seeds
 
     def display_seeds(self, seeds):
         self.result_text.delete(1.0, tk.END)
         self.result_text.insert(tk.END, "Generated Seeds:\n")
-
+        self.display_coordinates()
         # Progress Bar Update
         self.progress_var.set(0)
         self.root.update()
+        
+        progress_batch_size = 100
 
         for index, seed in enumerate(seeds, start=1):
             seed_str = f"{index}. {seed}"
@@ -372,22 +476,31 @@ class SeedGeneratorApp:
             copy_button = ttk.Button(self.root, text="Copy", command=lambda s=seed: self.copy_to_clipboard(s))
             self.result_text.window_create(tk.END, window=copy_button)
             self.result_text.insert(tk.END, "\n")
-
+            
             # Add an "Open in Chunkbase" button
             chunkbase_button = ttk.Button(self.root, text="Open in Chunkbase", command=lambda s=seed: self.open_chunkbase(s))
             self.result_text.window_create(tk.END, window=chunkbase_button)
             self.result_text.insert(tk.END, "\n\n")
-
-           # Update progress bar
-        progress_batch_size = 100  # Adjust as needed
-        for i in range(0, 65536, progress_batch_size):
-         progress_value = (i / 65536) * 100
-        self.progress_var.set(progress_value)
-        self.root.update()
+            
+            
+         # Update progress bar
+        if index % progress_batch_size == 0 or index == len(seeds):
+            progress_value = (index / len(seeds)) * 100
+            self.progress_var.set(progress_value)
+            self.root.update()
 
         # MADE BY MZEEN
         self.made_by_label.pack()
-        
+    
+    def display_coordinates(self):
+        structure_type = self.structure_var.get()
+        if "12 Eye End Portal [Bedrock]" in structure_type:
+            coords_str = "Coords: X: 308 Z: 1284"
+        else:
+            coords_str = ""
+
+        self.result_text.insert(tk.END, coords_str + "\n")
+    
     def seed_check(self):
         seed_input = tkinter.simpledialog.askstring("Structure Seed", "Enter seed:")
         if seed_input is not None:
@@ -428,6 +541,11 @@ class SeedGeneratorApp:
                 file.write(seeds_text)
             self.result_text.insert(tk.END, f"\nSeeds saved to {file_path}")
 
+    def reset_progress_bar(self):
+        self.progress_var.set(0)
+        self.root.update()
+    
+
     def clear_results(self):
         # Clear the result text
         self.result_text.delete(1.0, tk.END)
@@ -457,10 +575,9 @@ class SeedGeneratorApp:
         
         self.result_text.insert(tk.END, "All text copied to clipboard.\n")
         self.root.after(3500, self.clear_message)
-
-
+    
 if __name__ == "__main__":
     root = tk.Tk()
     app = SeedGeneratorApp(root)
     app.root.mainloop()
-    
+    root.mainloop()
